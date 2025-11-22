@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistente Pessoal Victorino</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🤖 Assistente Victorino</h1>
+            <p>Seu assistente pessoal inteligente</p>
+        </header>
+
+        <div class="chat-container">
+            <div class="chat-messages" id="chat-messages">
+                <div class="message assistant-message">
+                    <strong>Assistente Victorino:</strong>
+                    <span id="welcome-message">Carregando...</span>
+                </div>
+            </div>
+            
+            <div class="input-container">
+                <input type="text" id="user-input" placeholder="Pergunte algo ao assistente..." autocomplete="off">
+                <button onclick="enviarMensagem()">Enviar</button>
+            </div>
+        </div>
+
+        <div class="quick-actions">
+            <h3>⚡ Ações Rápidas</h3>
+            <div class="action-buttons">
+                <button onclick="acaoRapida('Dicas de produtividade para hoje')" class="action-btn">📝 Produtividade</button>
+                <button onclick="acaoRapida('Como organizar minhas tarefas')" class="action-btn">🎯 Organização</button>
+                <button onclick="acaoRapida('Ideias criativas para projetos')" class="action-btn">💡 Criatividade</button>
+                <button onclick="acaoRapida('Dicas para estudar melhor')" class="action-btn">📚 Estudo</button>
+            </div>
+        </div>
+
+        <footer>
+            <p>Criado por <strong>Victorino Sérgio</strong> com 🤖 DeepSeek API</p>
+        </footer>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+  </html>
