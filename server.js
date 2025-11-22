@@ -1,23 +1,81 @@
 const express = require('express');
-const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 const axios = require('axios');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middlewares
-app.use(cors());
-app.use(express.json());
-app.use(express.static('public'));
+// Middleware crítico - SERVIR ARQUIVOS ESTÁTICOS
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Rota principal
+// Debug da estrutura
+console.log('🔍 VERIFICANDO ESTRUTURA:');
+console.log('📁 Diretório atual:', __dirname);
+console.log('📂 Conteúdo:', fs.readdirSync(__dirname));
+console.log('📁 Pasta public existe?', fs.existsSync(path.join(__dirname, 'public')));
+console.log('📄 index.html existe?', fs.existsSync(path.join(__dirname, 'public', 'index.html')));
+
+// Rota principal - COM FALLBACK
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    const indexPath = path.join(__dirname, 'public', 'index.html');
+    
+    if (fs.existsSync(indexPath)) {
+        console.log('✅ index.html ENCONTRADO - Enviando...');
+        res.sendFile(indexPath);
+    } else {
+        console.log('❌ index.html NÃO ENCONTRADO');
+        // Fallback HTML
+        res.send(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Vexus - Em Desenvolvimento</title>
+                <style>
+                    body { font-family: Arial; padding: 40px; text-align: center; background: #f0f2f5; }
+                    .container { max-width: 600px; margin: 0 auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                    h1 { color: #2563eb; }
+                    .status { background: #dcfce7; color: #166534; padding: 15px; border-radius: 5px; margin: 20px 0; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <h1>⚡ Vexus</h1>
+                    <p>Seu assistente pessoal inteligente</p>
+                    <div class="status">
+                        <strong>🚧 Sistema em Desenvolvimento</strong>
+                        <p>Backend funcionando - Frontend em ajustes</p>
+                    </div>
+                    <p><strong>Victorino Sérgio</strong> - Moçambique 🇲🇿</p>
+                </div>
+            </body>
+            </html>
+        `);
+    }
 });
 
-// Rota da API DeepSeek
+// Health Check - MOSTRA INFORMAÇÕES REAIS
+app.get('/health', (req, res) => {
+    const publicPath = path.join(__dirname, 'public');
+    const indexPath = path.join(publicPath, 'index.html');
+    
+    res.json({
+        status: 'RUNNING',
+        message: 'Vexus Server está operacional',
+        author: 'Victorino Sérgio',
+        timestamp: new Date().toISOString(),
+        fileSystem: {
+            currentDirectory: __dirname,
+            directoryContents: fs.readdirSync(__dirname),
+            publicFolder: fs.existsSync(publicPath),
+            indexHtml: fs.existsSync(indexPath),
+            publicContents: fs.existsSync(publicPath) ? fs.readdirSync(publicPath) : 'NOT_FOUND'
+        }
+    });
+});
+
+// API do Assistente (mantém igual)
 app.post('/api/assistant', async (req, res) => {
     try {
         const { message } = req.body;
@@ -26,11 +84,10 @@ app.post('/api/assistant', async (req, res) => {
             return res.status(400).json({ error: 'Mensagem é obrigatória' });
         }
 
-        // Verificar API Key
         if (!process.env.DEEPSEEK_API_KEY) {
             return res.json({
                 success: false,
-                response: "🤖 **Assistente Victorino:** No momento estou aprendendo ainda. Em breve terei acesso à IA avançada! Como posso te ajudar com tarefas básicas?"
+                response: "**⚡ Vexus:** Configuração em andamento. Em breve estarei 100% operacional!"
             });
         }
 
@@ -39,7 +96,7 @@ app.post('/api/assistant', async (req, res) => {
             messages: [
                 {
                     role: 'system',
-                    content: 'Você é o Assistente Pessoal Victorino, um assistente inteligente e útil criado por Victorino Sérgio. Seja amigável, prático e responda em português.'
+                    content: 'Você é o Vexus, um assistente pessoal inteligente e útil. Seja prático e direto.'
                 },
                 {
                     role: 'user',
@@ -60,55 +117,20 @@ app.post('/api/assistant', async (req, res) => {
         
         res.json({ 
             success: true,
-            response: aiResponse + "\n\n---\n*Assistente Victorino 🤖*"
+            response: aiResponse + "\n\n---\n*Vexus 🤖*"
         });
 
     } catch (error) {
-        console.error('Erro DeepSeek:', error.message);
-        
-        // Fallback inteligente
-        const fallbackResponse = gerarRespostaFallback(req.body.message);
-        
+        console.error('Erro API:', error.message);
         res.json({
             success: false,
-            response: fallbackResponse + "\n\n---\n*Assistente Victorino 🤖*"
+            response: "**⚡ Vexus:** Estou com limitações temporárias. Tente novamente em alguns instantes!"
         });
     }
 });
 
-// Respostas fallback inteligentes
-function gerarRespostaFallback(mensagem) {
-    const msg = mensagem.toLowerCase();
-    
-    if (msg.includes('oi') || msg.includes('olá') || msg.includes('ola')) {
-        return "**Olá! Eu sou o Assistente Pessoal Victorino!** 🚀\n\nPosso te ajudar com:\n• 📝 Tarefas e organização\n• 💡 Ideias e criatividade\n• 📚 Aprendizado\n• 🎯 Metas e produtividade\n\nEm que posso ser útil?";
-    }
-    
-    if (msg.includes('tarefa') || msg.includes('fazer')) {
-        return "**🎯 Gerenciamento de Tarefas:**\n\n1. **Priorize** - Faça primeiro o que é importante\n2. **Divida** - Grandes tarefas em partes menores\n3. **Tempo** - Use a técnica Pomodoro (25min foco + 5min pausa)\n4. **Revise** - No final do dia, veja o progresso";
-    }
-    
-    if (msg.includes('estudar') || msg.includes('aprender')) {
-        return "**📚 Dicas de Estudo:**\n\n• **Revisão espaçada** - Revise conteúdo periodicamente\n• **Prática ativa** - Faça exercícios, não só leia\n• **Ensine** - Explique o conteúdo para alguém\n• **Ambiente** - Estude em lugar silencioso e organizado";
-    }
-    
-    if (msg.includes('tempo') || msg.includes('produtividade')) {
-        return "**⏰ Gestão do Tempo:**\n\n🕘 **Manhã** (6h-12h) - Tarefas difíceis\n🕑 **Tarde** (12h-18h) - Reuniões/tarefas médias\n🌙 **Noite** (18h-22h) - Planejamento/relaxamento\n\n**Dica:** Planeje seu dia na noite anterior!";
-    }
-    
-    return "**🤖 Assistente Victorino:**\n\nRecebi sua mensagem! No momento estou em desenvolvimento, mas posso te ajudar com:\n\n• Dicas de produtividade\n• Organização de tarefas\n• Ideias criativas\n• Planejamento de metas\n\nO que você gostaria de fazer hoje?";
-}
-
-// Health check
-app.get('/health', (req, res) => {
-    res.json({ 
-        status: 'OK', 
-        message: 'Assistente Pessoal Victorino está rodando!',
-        author: 'Victorino Sérgio',
-        timestamp: new Date().toISOString()
-    });
-});
-
 app.listen(PORT, () => {
-    console.log(`🚀 Assistente Pessoal Victorino rodando na porta ${PORT}`);
+    console.log(`🚀 Vexus Server rodando na porta ${PORT}`);
+    console.log(`📍 Acesse: http://localhost:${PORT}`);
+    console.log(`🔍 Health Check: http://localhost:${PORT}/health`);
 });
